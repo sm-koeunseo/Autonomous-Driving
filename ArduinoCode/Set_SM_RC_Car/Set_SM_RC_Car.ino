@@ -107,6 +107,7 @@ static const char PROGMEM INDEX_HTML[] = R"rawliteral(
     </td>
   </tr>
   <tr>
+    <!-- onmouseup, ontouchend 삭제하여 주행 상태 유지 가능 -->
     <td align="center">
       <button class="button" onmousedown="toggleCheckbox('turn_left');" ontouchstart="toggleCheckbox('turn_left');" onmouseup="toggleCheckbox('stop');" ontouchend="toggleCheckbox('stop');">Turn Left</button>
     </td>
@@ -462,17 +463,8 @@ String ip2Str(IPAddress ip){
   return s;
 }
 
+// 전진 : 오른쪽 HIGH, 왼쪽 LOW
 void car_go(int speed){
-  //오른쪽모터
-  digitalWrite(IN_11,LOW);
-  analogWrite(IN_12,speed);
-  
-  //왼쪽모터
-  digitalWrite(IN_21,HIGH);
-  analogWrite(IN_22,speed);
-}
-
-void car_back(int speed){
   //오른쪽모터
   digitalWrite(IN_11,HIGH);
   analogWrite(IN_12,speed);
@@ -482,30 +474,42 @@ void car_back(int speed){
   analogWrite(IN_22,speed);
 }
 
-void car_go_left(int speed){
+// 후진 : 오른쪽 LOW, 왼쪽 HIGH
+void car_back(int speed){
   //오른쪽모터
   digitalWrite(IN_11,LOW);
   analogWrite(IN_12,speed);
   
   //왼쪽모터
-  digitalWrite(IN_21,LOW);
+  digitalWrite(IN_21,HIGH);
+  analogWrite(IN_22,speed);
+}
+
+// 전진하며 회전하는 메커니즘으로 변경
+void car_go_left(int speed){
+  //오른쪽모터
+  digitalWrite(IN_11,HIGH);
+  analogWrite(IN_12,speed);
+  
+  //왼쪽모터
+  digitalWrite(IN_21,HIGH);
   analogWrite(IN_22,0);
 }
 
 void car_go_right(int speed){
   //오른쪽모터
-  digitalWrite(IN_11,HIGH);
+  digitalWrite(IN_11,LOW);
   analogWrite(IN_12,0);
   
   //왼쪽모터
-  digitalWrite(IN_21,HIGH);
+  digitalWrite(IN_21,LOW);
   analogWrite(IN_22,speed);
 }
 
 void car_turn_left(int speed){
   //오른쪽모터
-  digitalWrite(IN_11,LOW);
-  analogWrite(IN_12,speed);
+  digitalWrite(IN_11,HIGH);
+  analogWrite(IN_12,HIGH);
   
   //왼쪽모터
   digitalWrite(IN_21,LOW);
@@ -514,10 +518,10 @@ void car_turn_left(int speed){
 
 void car_turn_right(int speed){
   //오른쪽모터
-  digitalWrite(IN_11,HIGH);
+  digitalWrite(IN_11,LOW);
   analogWrite(IN_12,speed);
   
   //왼쪽모터
-  digitalWrite(IN_21,HIGH);
+  digitalWrite(IN_21,LOW);
   analogWrite(IN_22,speed);
 }
