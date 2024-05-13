@@ -509,10 +509,10 @@ void car_go_right(int speed){
 void car_turn_left(int speed){
   //오른쪽모터
   digitalWrite(IN_11,HIGH);
-  analogWrite(IN_12,HIGH);
+  analogWrite(IN_12,speed);
   
   //왼쪽모터
-  digitalWrite(IN_21,LOW);
+  digitalWrite(IN_21,HIGH);
   analogWrite(IN_22,speed);
 }
 
