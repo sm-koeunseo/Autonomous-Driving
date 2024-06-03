@@ -2,3 +2,13 @@
 .idea
 venv
 command.txt
+
+ch07*/images/
+ch07*/yolo_train/
+
+aeenv/
+# python -m venv {}
+# {}\Scripts\activate (windows)
+# source {}/bin/activate or deactivate
+# pip install numpy
+# pip install opencv-python
