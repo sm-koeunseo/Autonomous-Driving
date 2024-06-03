@@ -17,7 +17,7 @@ buffer = b''
 urlopen('http://' + ip + "/action?go=speed100")
 
 # YOLOv5 모델 정의
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt')
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='data/1st/best.pt')
 
 yolo_state = "go"
 thread_frame = None  
