@@ -11,6 +11,7 @@ aeenv/
 # {}\Scripts\activate (windows)
 # source {}/bin/activate or deactivate
 # pip install numpy
+
 # pip install opencv-python
 
 # 가상환경 
