@@ -2,3 +2,21 @@
 .idea
 venv
 command.txt
+
+ch07*/images/
+ch07*/yolo_train/
+
+aeenv/
+# python -m venv {}
+# {}\Scripts\activate (windows)
+# source {}/bin/activate or deactivate
+# pip install numpy
+# pip install opencv-python
+
+# 가상환경 
+# conda info --envs : list
+# conda activate yolov5_env
+
+# 설치
+# conda install pytorch
+# conda install opencv-python
