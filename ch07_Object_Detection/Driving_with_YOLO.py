@@ -7,6 +7,7 @@ import threading
 import time
 import os
 import pathlib
+import sys
 temp = pathlib.PosixPath
 pathlib.PosixPath = pathlib.WindowsPath
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -39,7 +40,7 @@ def yolo_thread():
             
             if detections.empty:
                 yolo_state = "go"
-                urlopen('http://' + ip + "/action?go=speed100")
+                urlopen('http://' + ip + "/action?go=speed80")
             else:
                 # 결과를 반복하며 객체 표시
                 for _, detection in detections.iterrows():
@@ -47,17 +48,36 @@ def yolo_thread():
                     label = detection['name']
                     conf = detection['confidence']
                     
-                    if "stop" in label and conf > 0.5:
-                        print("stop")
+                    print(x1,", ", x2, ", ", y1, ", ", y2)
+                    if "person" in label and conf > 0.6:
+                        print("person")
                         yolo_state = "stop"
-                    elif "slow" in label and conf > 0.5:
+                    elif ("bike" in label or "car" in label) and conf > 0.6:
+                        print("obstacle")
+                        if ((x2 - x1) > 150) or ((y2 - y1) > 150):
+                            print("stop state")
+                            yolo_state = "stop"
+                        elif ((x2 - x1) > 120) or ((y2 - y1) > 120):
+                            print("slow state")
+                            yolo_state = "go"
+                            urlopen('http://' + ip + "/action?go=speed50")
+                    elif "stop" in label and conf > 0.6:
+                        print("stop")
+                        if ((x2 - x1) > 120) or ((y2 - y1) > 120):
+                            print("stop state")
+                            yolo_state = "stop"
+                    elif "slow" in label and conf > 0.6:
                         print("slow")
-                        yolo_state = "go"
-                        urlopen('http://' + ip + "/action?go=speed80")
-                    elif "Uturn" in label and conf > 0.5:
+                        if ((x2 - x1) > 120) or ((y2 - y1) > 120):
+                            print("slow state")
+                            yolo_state = "go"
+                            urlopen('http://' + ip + "/action?go=speed50")
+                    elif "Uturn" in label and conf > 0.6:
                         print("Uturn")
-                        yolo_state = "Uturn"
-                        urlopen('http://' + ip + "/action?go=speed80")
+                        if ((x2 - x1) > 120) or ((y2 - y1) > 120):
+                            print("Uturn state")
+                            yolo_state = "Uturn"
+                            urlopen('http://' + ip + "/action?go=speed80")
                     
                     # 박스와 라벨 표시
                     color = np.random.randint(0, 256, size=3).tolist()  # 무작위 색상 선택
@@ -154,6 +174,10 @@ while True:
             key = cv2.waitKey(1)
             if key == ord('q'):
                 break
+
+    except KeyboardInterrupt as e:
+        print("KeyboardInterrupt")
+        sys.exit()
 
     except Exception as e:
         print("에러:", str(e))
