@@ -12,13 +12,13 @@ temp = pathlib.PosixPath
 pathlib.PosixPath = pathlib.WindowsPath
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-ip = '192.168.137.91'
+ip = '192.168.137.210'
 stream = urlopen('http://' + ip + ':81/stream')
 buffer = b''
-urlopen('http://' + ip + "/action?go=speed100")
+urlopen('http://' + ip + "/action?go=speed70")
 
 # YOLOv5 모델 정의
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='data/1st/best.pt')
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt', trust_repo=True)
 
 yolo_state = "go"
 thread_frame = None  
@@ -39,8 +39,9 @@ def yolo_thread():
             detections = results.pandas().xyxy[0]
             
             if detections.empty:
+                print("default go")
                 yolo_state = "go"
-                urlopen('http://' + ip + "/action?go=speed80")
+                urlopen('http://' + ip + "/action?go=speed70")
             else:
                 # 결과를 반복하며 객체 표시
                 for _, detection in detections.iterrows():
@@ -48,36 +49,47 @@ def yolo_thread():
                     label = detection['name']
                     conf = detection['confidence']
                     
-                    print(x1,", ", x2, ", ", y1, ", ", y2)
+                    # print(x1,", ", x2, ", ", y1, ", ", y2)
                     if "person" in label and conf > 0.6:
                         print("person")
                         yolo_state = "stop"
-                    elif ("bike" in label or "car" in label) and conf > 0.6:
+                    elif ("bike" in label or "car" in label) and conf > 0.5:
                         print("obstacle")
-                        if ((x2 - x1) > 150) or ((y2 - y1) > 150):
+                        if ((x2 - x1) > 150) or ((y2 - y1) > 150): #매우 근접하면 정지
                             print("stop state")
                             yolo_state = "stop"
-                        elif ((x2 - x1) > 120) or ((y2 - y1) > 120):
+                        elif ((x2 - x1) > 120) or ((y2 - y1) > 120): #어느정도 근접하면 천천히
                             print("slow state")
                             yolo_state = "go"
                             urlopen('http://' + ip + "/action?go=speed50")
                     elif "stop" in label and conf > 0.6:
                         print("stop")
-                        if ((x2 - x1) > 120) or ((y2 - y1) > 120):
+                        if ((x2 - x1) > 120) or ((y2 - y1) > 120): #어느정도 근접하면 정지
                             print("stop state")
                             yolo_state = "stop"
                     elif "slow" in label and conf > 0.6:
                         print("slow")
-                        if ((x2 - x1) > 120) or ((y2 - y1) > 120):
+                        if ((x2 - x1) > 120) or ((y2 - y1) > 120): #어느정도 근접하면 천천히
                             print("slow state")
                             yolo_state = "go"
                             urlopen('http://' + ip + "/action?go=speed50")
                     elif "Uturn" in label and conf > 0.6:
                         print("Uturn")
-                        if ((x2 - x1) > 120) or ((y2 - y1) > 120):
+                        if ((x2 - x1) > 120) or ((y2 - y1) > 120): #어느정도 근접하면 유턴
                             print("Uturn state")
                             yolo_state = "Uturn"
                             urlopen('http://' + ip + "/action?go=speed80")
+                    elif "left" in label and conf > 0.5 :
+                        print("left detect") #
+                        if ((x2 - x1) > 100) or ((y2 - y1) > 100): #어느정도 근접하면 4초동안 좌회전
+                            print("left turn")
+                            yolo_state = "left"
+                            urlopen('http://' + ip + "/action?go=speed80")
+                            urlopen('http://' + ip + "/action?go=left")
+                            time.sleep(4) 
+                            print("turn end")
+                            urlopen('http://' + ip + "/action?go=forward")
+
                     
                     # 박스와 라벨 표시
                     color = np.random.randint(0, 256, size=3).tolist()  # 무작위 색상 선택
@@ -104,6 +116,8 @@ def image_process_thread():
                 urlopen('http://' + ip + "/action?go=right")
             elif car_state == "left" and yolo_state == "go":
                 urlopen('http://' + ip + "/action?go=left")
+            elif car_state == "left" and yolo_state == "left":
+                urlopen('http://' + ip + "/action?go=left")    
             elif yolo_state == "Uturn":
                 urlopen('http://' + ip + "/action?go=turn_right")
             elif yolo_state == "stop":
@@ -155,20 +169,23 @@ while True:
             
             # 현재 무게중심 위치가 -50~50은 직진하도록 설계
             if center_offset < -70:
-                print(f"오른쪽/{car_state}")
+                #print(f"오른쪽/{car_state}")
                 car_state = "right"
+            
             elif center_offset > 70:
-                print(f"왼쪽/{car_state}")
+                #print(f"왼쪽/{car_state}")
                 car_state = "left"
+                
             else:
-                print(f"직진/{car_state}")
+                #print(f"직진/{car_state}")
                 car_state = "go"
+            
                 
             image_flag = 1
 
             # 쓰레드에서 이미지 처리가 완료되었으면
             if thread_image_flag == 1:
-                #cv2.imshow('thread_frame', thread_frame)
+                # cv2.imshow('thread_frame', thread_frame)
                 thread_image_flag = 0
 
             key = cv2.waitKey(1)
